@@ -35,6 +35,7 @@ from queue import Queue, Empty
 from camera import Camera, CameraState
 import cv2
 from osc.OSCMessage import OSCMessageType, OSCMessage
+from osc.osc_csv_reader import CSVLogger
 from utils.misc_utils import PlaySound, SND_FILENAME, SND_ASYNC, resource_path
 import numpy as np
 
@@ -66,7 +67,11 @@ class CameraWidget:
         self.gui_roi_message = f"-ROIMESSAGE{widget_id}-"
         self.gui_mask_markup = f"-MARKUP{widget_id}-"
         self.gui_mask_lighten = f"-LIGHTEN{widget_id}-"
+        self.gui_record_csv_data = f"-RECORDING{widget_id}-"
 
+        #self.osc_manager = osc_manager
+        self.csv_logger = CSVLogger(widget_id)
+        self.is_recording = False
         self.last_eye_info = None
         self.osc_queue = osc_queue
         self.main_config = main_config
@@ -148,6 +153,11 @@ class CameraWidget:
                 sg.Button(
                     "Save and Restart Tracking",
                     key=self.gui_save_tracking_button,
+                    button_color="#6f4ca1",
+                ),
+                sg.Button(
+                    "Recording (CSV)",
+                    key=self.gui_record_csv_data,
                     button_color="#6f4ca1",
                 ),
             ],
@@ -470,6 +480,18 @@ class CameraWidget:
 
             if event == self.gui_recenter_eyes:
                 self.recenter_eyes()
+
+            if event == self.gui_record_csv_data:
+                if self.csv_logger.is_recording:
+                    self.csv_logger.stop_recording()
+                    window[self.gui_record_csv_data].update(text="Recording (CSV)", button_color="#6f4ca1")
+                else: 
+                    self.csv_logger.start_recording()
+                    window[self.gui_record_csv_data].update(text="Recording...", button_color="#ff4444")
+                    
+            #if event == self.gui_record_csv_data:
+                #state = self.is_recording = True
+                #self.osc_manager.recording_state(state)
 
             needs_roi_set = self.config.roi_window_h <= 0 or self.config.roi_window_w <= 0
 

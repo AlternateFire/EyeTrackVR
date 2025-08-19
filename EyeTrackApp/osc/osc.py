@@ -36,9 +36,11 @@ from config import EyeTrackConfig
 from osc.OSCMessage import OSCMessage, OSCMessageType
 from osc.VRCFTModuleMessenger import VRCFTModuleSender
 from osc.VRChatOSCSender import VRChatOSCSender
+from osc.osc_csv_reader import CSVLogger
+from eye import EyeId
+
 import queue
 import threading
-
 class OSCManager:
     def __init__(
         self,
@@ -55,6 +57,7 @@ class OSCManager:
         self.osc_receiver = None
         self.osc_sender_thread: Optional[threading.Thread] = None
         self.osc_receiver_thread: Optional[threading.Thread] = None
+        #self.is_recording: bool = False
 
     def start(self):
         self.setup_sender()
@@ -113,7 +116,11 @@ class OSCManager:
         if self.osc_receiver_thread:
             self.receiver_cancellation_event.set()
             self.osc_receiver_thread.join()
-
+    
+    #def set_recording_state(self, state: bool):
+        #self.is_recording = state
+        #status = "ON" if self.is_recording else "OFF"
+        #print(f"\033[92m[INFO] CSV Recording {status}\033[0m")
 
 class OSCSender:
     def __init__(
@@ -128,10 +135,14 @@ class OSCSender:
         self.config = main_config.settings
         self.vrc_sender = VRChatOSCSender()
         self.module_sender = VRCFTModuleSender()
+        self.csv_loggers = {}
 
         self.vrc_client = None
         self.vrcft_client = None
-
+    
+    def add_csv_logger(self, eye_id: EyeId, logger: CSVLogger):
+        self.csv_loggers[eye_id] = logger
+        
     def run(self):
         self.vrc_client = udp_client.SimpleUDPClient(self.config.gui_osc_address, int(self.config.gui_osc_port))
         self.vrcft_client = udp_client.SimpleUDPClient(
@@ -154,8 +165,21 @@ class OSCSender:
                             main_config=self.main_config,
                             config=self.config,
                         )
+                        #eye_side = self.vrc_sender.get_is_single_eye(self.main_config.eye_display_id)
+                        #if 
+                        #if hasattr(self, 'is_recording') and self.is_recording:
+                            #eye_side = self.main_config.eye_display_id
+                            #log_eye_data(sender=self.vrc_sender, eye_id=eye_side)
+                        eye_side = self.main_config.eye_display_id
+                        if eye_side in self.csv_loggers:
+                            self.csv_loggers[eye_side].log_eye_data(self.vrc_sender)
+
                     case OSCMessageType.VRCFT_MODULE_INFO:
                         self.module_sender.send(osc_message=osc_message, client=self.vrcft_client)
+                    #case OSCMessageType.RECORDING_STATE:
+                        #self.is_recording = osc_message.data
+                        #status = "ON" if self.is_recording else "OFF"
+                        #print(f"\033[92m[INFO] CSV Recording {status}\033[0m")
                     case _:
                         raise Exception("Encountered message without a handler %s", osc_message.type)
             except TypeError:
