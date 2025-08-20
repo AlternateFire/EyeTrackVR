@@ -86,6 +86,7 @@ class KeyManager:
         self.VRCFT_MODULE_SETTINGS_RADIO_NAME = f"-VRCFTSETTINGSRADIO{unique_id}-"
         self.GUIOFF_RADIO_NAME = f"-GUIOFF{unique_id}-"
         self.BSB2E_RADIO_NAME = f"-BSB2ERADIO{unique_id}-"
+        self.BSB2E_NAME = f"-BSB2EWIDGET{unique_id}-"
 
 # Create an instance of the KeyManager
 key_manager = KeyManager()
@@ -170,7 +171,7 @@ def create_window(config, settings, eyes):
             sg.Column(
                 eyes[2].widget_layout,
                 vertical_alignment="top",
-                key=key_manager.BSB2E_RADIO_NAME,
+                key=key_manager.BSB2E_NAME,
                 visible=(config.eye_display_id in [EyeId.BSB2E]),
                 background_color="#424042",
             ),
@@ -417,7 +418,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 config.eye_display_id = EyeId.RIGHT
                 config.settings.tracker_single_eye = 2
                 config.save()
@@ -435,7 +436,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 config.eye_display_id = EyeId.LEFT
                 config.settings.tracker_single_eye = 1
                 config.save()
@@ -453,7 +454,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 config.eye_display_id = EyeId.BOTH
                 config.settings.tracker_single_eye = 0
                 config.save()
@@ -471,7 +472,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=True)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 config.eye_display_id = EyeId.SETTINGS
                 config.save()
 
@@ -488,7 +489,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=True)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 config.eye_display_id = EyeId.ALGOSETTINGS
                 config.save()
 
@@ -505,7 +506,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=True)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 config.eye_display_id = EyeId.VRCFTMODULESETTINGS
                 config.save()
 
@@ -520,7 +521,7 @@ def main():
                 eyes[2].start()
                 window[key_manager.LEFT_EYE_NAME].update(visible=False)
                 window[key_manager.RIGHT_EYE_NAME].update(visible=False)
-                window[key_manager.BSB2E_RADIO_NAME].update(visible=True)
+                window[key_manager.BSB2E_NAME].update(visible=True)
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
@@ -552,6 +553,7 @@ def main():
                 window[key_manager.SETTINGS_NAME].update(visible=False)
                 window[key_manager.VRCFT_MODULE_SETTINGS_NAME].update(visible=False)
                 window[key_manager.ALGO_SETTINGS_NAME].update(visible=False)
+                window[key_manager.BSB2E_NAME].update(visible=False)
                 #config.eye_display_id = EyeId.GUIOFF
                 config.save()
                 window.close()
