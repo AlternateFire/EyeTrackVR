@@ -38,6 +38,7 @@ from settings.algo_settings_widget import AlgoSettingsWidget
 from osc.osc import OSCManager
 from osc.OSCMessage import OSCMessage
 from utils.misc_utils import is_nt, resource_path
+from osc.osc_csv_reader import CSVLogger
 import cv2
 import numpy as np
 import uuid
@@ -301,6 +302,18 @@ def main():
 
     osc_manager.start()
 
+    # Creating our instances of CSVLogger here, send info to our OSCSender 
+    osc_manager.osc_sender.add_csv_logger(eye_id=EyeId.LEFT, logger=eyes[1].csv_logger)
+    osc_manager.osc_sender.add_csv_logger(eye_id=EyeId.RIGHT, logger=eyes[0].csv_logger)
+    both_eyes_logger = CSVLogger(EyeId.BOTH)
+    osc_manager.osc_sender.add_csv_logger(eye_id=EyeId.BOTH, logger=both_eyes_logger)
+
+    # Callback to our listener 
+    config.register_listener_callback(osc_manager.update)
+    config.register_listener_callback(eyes[0].on_config_update)
+    config.register_listener_callback(eyes[1].on_config_update)
+    print("\033[CSVLogger is intialized\033[0m")
+    
     while True:
         tint = 33
         fs = False
@@ -486,6 +499,6 @@ def main():
                 config.save()
                 window.close()
                 break
-
+                
 if __name__ == "__main__":
     main()

@@ -488,10 +488,6 @@ class CameraWidget:
                 else: 
                     self.csv_logger.start_recording()
                     window[self.gui_record_csv_data].update(text="Recording...", button_color="#ff4444")
-                    
-            #if event == self.gui_record_csv_data:
-                #state = self.is_recording = True
-                #self.osc_manager.recording_state(state)
 
             needs_roi_set = self.config.roi_window_h <= 0 or self.config.roi_window_w <= 0
 
