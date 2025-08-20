@@ -20,26 +20,34 @@ class CSVLogger:
         with self._lock:
             if self.is_recording: 
                 return
-
+            
             # reset time each new recording session, reuse old implementation from branch and see
             self.start_time_ms = int(round(time.time() * 1000)) # or time.time() 
 
             # Reuse previous implementation of log_eye_data
             formatted_timestamp = datetime.now().strftime("%Y-%m-%d_%I-%M-%S")
 
+            # Should be csv_files/session/(different eye: left, right, both directories)/data.csv
             folder = "csv_files"
-            session_folder = os.path.join(folder, f"session{formatted_timestamp}")
+            session_folder = os.path.join(folder, f"session_{formatted_timestamp}")
+            os.makedirs(session_folder, exist_ok=True)
 
-            if not os.path.exists(session_folder): 
-                print(f"\033[92m[INFO] Session folder created: {os.getcwd()}\033[0m")
-                os.makedirs(folder, exist_ok=True)
+            if self.eye_id == EyeId.LEFT:
+                eye_directory = "eye_left"
+            elif self.eye_id == EyeId.RIGHT:
+                eye_directory = "eye_right"
+            elif self.eye_id == EyeId.BOTH: 
+                eye_directory = "eye_both"
             else:
-                print(f"\033[93m[WARN] Session folder already exists: {session_folder}\033[0m")
+                return
+            
+            eye_directory_path = os.path.join(session_folder, eye_directory)
+            os.makedirs(eye_directory_path, exist_ok=True)
+        
+            filename = f"{formatted_timestamp}_{self.eye_id.name}_eye_data.csv"   
+            self.csv_file = os.path.join(eye_directory_path, filename)
 
-            filename = f"{formatted_timestamp}_{self.eye_id}_eye_data.csv"   
-            self.csv_file = os.path.join(folder, filename)
-
-            try: 
+            try:
                 with open(self.csv_file, 'w', newline='') as f:
                     writer = csv.writer(f)
                     writer.writerow(['timestamp_ms', 'eye_id', 'x', 'y', 'pupil_dilation', 'eye_blink'])

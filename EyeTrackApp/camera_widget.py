@@ -481,6 +481,7 @@ class CameraWidget:
             if event == self.gui_recenter_eyes:
                 self.recenter_eyes()
 
+            # Record button
             if event == self.gui_record_csv_data:
                 if self.csv_logger.is_recording:
                     self.csv_logger.stop_recording()
@@ -488,7 +489,9 @@ class CameraWidget:
                 else: 
                     self.csv_logger.start_recording()
                     window[self.gui_record_csv_data].update(text="Recording...", button_color="#ff4444")
-
+            #elif self.config.camera_source is not None:
+                #return
+            
             needs_roi_set = self.config.roi_window_h <= 0 or self.config.roi_window_w <= 0
 
             # TODO: Refactor if statements below...
