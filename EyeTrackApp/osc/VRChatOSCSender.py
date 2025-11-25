@@ -50,7 +50,7 @@ class VRChatOSCSender:
 
 
         output_method = None
-
+       
         if config.gui_vrc_native:
             output_method = self.output_native
         if config.gui_osc_vrcft_v1:
