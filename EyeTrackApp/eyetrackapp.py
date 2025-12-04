@@ -63,7 +63,7 @@ WINDOW_NAME = "EyeTrackApp"
 
 
 page_url = "https://github.com/EyeTrackVR/EyeTrackVR/releases/latest"
-appversion = "EyeTrackApp 0.2.6"
+appversion = "EyeTrackApp 0.2.4"
 
 
 class KeyManager:
@@ -506,6 +506,6 @@ def main():
                 config.save()
                 window.close()
                 break
-                
+
 if __name__ == "__main__":
     main()
