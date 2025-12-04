@@ -6,6 +6,7 @@ from eye import EyeId
 from threading import Lock
 from typing import Optional
 
+# This is a test
 # Don't known if i need to worry about race conditions here? Probably not? Not a super robust implementation
 # Old method was global, kind of weird needed to be fleshed out more
 class CSVLogger:
