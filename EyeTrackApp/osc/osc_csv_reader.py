@@ -175,7 +175,7 @@ class CSVLogger:
             print(f"\033[91m[ERROR] CSV write failed for {self.eye_id.name}: {e}\033[0m")
             return False
 
-    ## Current inclusion can be debated, but leaving for now.
+    ## Current inclusion can be debated, but leaving it out for now
     # def get_recording_status(self) -> dict:
     #     """
     #     Get current recording status.

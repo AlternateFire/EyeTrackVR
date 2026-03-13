@@ -37,8 +37,10 @@ from settings.general_settings_widget import SettingsWidget
 from settings.algo_settings_widget import AlgoSettingsWidget
 from osc.osc import OSCManager
 from osc.osc_csv_reader import CSVLogger
+from video_recorder import VideoRecorder
 from osc.OSCMessage import OSCMessage
 from utils.misc_utils import is_nt, resource_path
+from utils.camera_utils import list_available_cameras
 import cv2
 import numpy as np
 import uuid
@@ -85,12 +87,39 @@ class KeyManager:
         self.VRCFT_MODULE_SETTINGS_RADIO_NAME = f"-VRCFTSETTINGSRADIO{unique_id}-"
         self.GUIOFF_RADIO_NAME = f"-GUIOFF{unique_id}-"
         self.PARTICIPANT_ID_NAME = f"-PARTICIPANTID{unique_id}-"
+        self.WORLD_CAMERA_NAME = f"-WORLDCAMERA{unique_id}-"
 
 
 # Create an instance of the KeyManager
 key_manager = KeyManager()
 
+# Cached once at window creation - do NOT call list_available_cameras() in the event loop,
+# it runs ffmpeg/OpenCV and causes eye camera choppiness when called every ~33ms.
+_cached_world_camera_list: list = []
+
+
+def _world_cam_display_for_value(config_value: str, camera_list: list) -> str:
+    """Map stored config value (e.g. '0') to dropdown display string (e.g. 'FaceTime HD (0)')."""
+    if not config_value:
+        return "Disabled"
+    for disp, src in camera_list:
+        if str(src) == str(config_value):
+            return disp
+    # Config has value not in current list (camera unplugged?) - show Disabled
+    return "Disabled"
+
+
+def _world_cam_value_for_display(display: str, camera_list: list) -> str:
+    """Map dropdown display string to source value for VideoRecorder."""
+    for disp, src in camera_list:
+        if disp == display:
+            return src
+    return ""
+
+
 def create_window(config, settings, eyes):
+    global _cached_world_camera_list
+    _cached_world_camera_list = list_available_cameras()
 
     key_manager.update_keys()
 
@@ -150,6 +179,18 @@ def create_window(config, settings, eyes):
                 key=key_manager.PARTICIPANT_ID_NAME,
                 size=(8, 1),
                 tooltip="Optional. Used for folder: {date}_Participant_{id}",
+            ),
+            sg.Text("World cam", background_color="#292929"),
+            sg.Combo(
+                values=[disp for disp, _ in _cached_world_camera_list],
+                default_value=_world_cam_display_for_value(
+                    config.settings.gui_world_camera_source,
+                    _cached_world_camera_list,
+                ),
+                key=key_manager.WORLD_CAMERA_NAME,
+                size=(24, 1),
+                readonly=True,
+                tooltip="Main record only. Select webcam for world video.",
             ),
         ],
         [
@@ -273,11 +314,12 @@ def main():
 
     timerResolution(True)
 
-    osc_queue: queue.Queue[OSCMessage] = queue.Queue(maxsize=10)
+    osc_queue: queue.Queue[OSCMessage] = queue.Queue(maxsize=256)
+    world_camera_recorder = VideoRecorder(config.settings.gui_world_camera_source or "")
 
     eyes = [
-        CameraWidget(EyeId.RIGHT, config, osc_queue),
-        CameraWidget(EyeId.LEFT, config, osc_queue),
+        CameraWidget(EyeId.RIGHT, config, osc_queue, world_camera_recorder=world_camera_recorder),
+        CameraWidget(EyeId.LEFT, config, osc_queue, world_camera_recorder=world_camera_recorder),
     ]
 
     settings = [
@@ -366,6 +408,7 @@ def main():
                 print("\033[94m[INFO] Exiting EyeTrackApp\033[0m")
                 for eye in eyes:
                     eye.stop()
+                world_camera_recorder.stop_recording()
                 cancellation_event.set()
                 osc_manager.shutdown()
                 timerResolution(False)
@@ -378,6 +421,16 @@ def main():
             participant_id = values.get(key_manager.PARTICIPANT_ID_NAME, "") or ""
             if config.settings.gui_csv_participant_id != participant_id:
                 config.settings.gui_csv_participant_id = participant_id
+                config.save()
+
+            # Sync world camera source from dropdown to config (display -> source value)
+            world_cam_display = values.get(key_manager.WORLD_CAMERA_NAME, "") or ""
+            world_cam_source = _world_cam_value_for_display(
+                world_cam_display, _cached_world_camera_list
+            )
+            if config.settings.gui_world_camera_source != world_cam_source:
+                config.settings.gui_world_camera_source = world_cam_source
+                world_camera_recorder.update_camera_source(world_cam_source)
                 config.save()
 
             try:

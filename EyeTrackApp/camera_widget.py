@@ -24,6 +24,7 @@ LICENSE: Babble Software Distribution License 1.0
 ------------------------------------------------------------------------------------------------------
 """
 
+import os
 import PySimpleGUI as sg
 from config import EyeTrackConfig
 from collections import deque
@@ -48,8 +49,13 @@ Y = 1
 
 class CameraWidget:
 
-    def __init__(self, widget_id: EyeId, main_config: EyeTrackConfig,
-                 osc_queue: Queue):
+    def __init__(
+        self,
+        widget_id: EyeId,
+        main_config: EyeTrackConfig,
+        osc_queue: Queue,
+        world_camera_recorder=None,
+    ):
         self.gui_camera_addr = f"-CAMERAADDR{widget_id}-"
         self.gui_rotation_slider = f"-ROTATIONSLIDER{widget_id}-"
         self.gui_rotation_ui_padding = f"-ROTATIONUIPADDING{widget_id}-"
@@ -76,6 +82,7 @@ class CameraWidget:
         self.gui_recording_timer = f"-RECORDINGTIMER{widget_id}-"
 
         self.csv_logger = CSVLogger(widget_id, config=main_config)
+        self.world_camera_recorder = world_camera_recorder
         self.is_recording = False
         self.recording_start_time = None
         self.active_recording_button = None  # which button is showing the timer (main, left test, or right test)
@@ -536,6 +543,8 @@ class CameraWidget:
             if event == self.gui_record_csv_data:
                 if self.csv_logger.is_recording:
                     self.csv_logger.stop_recording()
+                    if self.world_camera_recorder:
+                        self.world_camera_recorder.notify_main_recording_stopped()
                     self.recording_start_time = None
                     self.active_recording_button = None
                     window[self.gui_record_csv_data].update(
@@ -546,6 +555,10 @@ class CameraWidget:
                     success_record = self.csv_logger.start_recording(
                         camera_connected=camera_connected)
                     if success_record:
+                        # Start world camera recording if configured (Main record only)
+                        if self.world_camera_recorder and self.settings.gui_world_camera_source:
+                            session_folder = os.path.dirname(self.csv_logger.csv_file)
+                            self.world_camera_recorder.notify_main_recording_started(session_folder)
                         self.recording_start_time = time.time()
                         self.active_recording_button = self.gui_record_csv_data
                         window[self.gui_record_csv_data].update(

@@ -216,7 +216,8 @@ class EyeTrackSettingsConfig(BaseModel):
     gui_EyebrowThresholdLowering: float = 0.15
     gui_OutputMultiplier: float = 1
     gui_use_module: bool = False
-    gui_csv_participant_id: str = ""  # e.g. "001" for folder 2025-03-10_Participant_001
+    gui_csv_participant_id: str = ""  #### EX: "001" for folder 2025-03-10_Participant_001
+    gui_world_camera_source: str = ""  #### EX: "0" for default webcam, up to n cameras, or "http://..." for IP cam. Field empty = disabled (not in use)
 
 
 class EyeTrackConfig(BaseModel):

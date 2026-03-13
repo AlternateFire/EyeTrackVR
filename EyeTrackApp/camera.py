@@ -137,8 +137,9 @@ class Camera:
                 if is_serial_capture_source(addr):
                     pass # TODO: find a nicer way to stop the com port
                   #  self.serial_connection.close()
-                else:
+                elif self.cv2_camera is not None:
                     self.cv2_camera.release()
+                    self.cv2_camera = None
 
                 return
             should_push = True
@@ -199,6 +200,8 @@ class Camera:
     def get_cv2_camera_picture(self, should_push):
         try:
             ret, image = self.cv2_camera.read()
+            if not ret or image is None:
+                raise RuntimeError("Problem while getting frame")
             height, width = image.shape[:2]  # Calculate the aspect ratio
             if int(width) > 680:
                 aspect_ratio = float(width) / float(
@@ -206,9 +209,6 @@ class Camera:
                 )  # Determine the new height based on the desired maximum width
                 new_height = int(680 / aspect_ratio)
                 image = cv2.resize(image, (680, new_height))
-            if not ret:
-                self.cv2_camera.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                raise RuntimeError("Problem while getting frame")
             frame_number = self.cv2_camera.get(cv2.CAP_PROP_POS_FRAMES)
             current_frame_time = time.time()
             delta_time = current_frame_time - self.last_frame_time

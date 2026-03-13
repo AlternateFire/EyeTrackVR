@@ -24,7 +24,7 @@ LICENSE: Babble Software Distribution License 1.0
 ------------------------------------------------------------------------------------------------------
 """
 
-
+import traceback
 from time import sleep
 from typing import Dict, Optional, Iterable, Callable
 
@@ -109,7 +109,8 @@ class OSCManager:
 
     def stop_sender(self):
         self.sender_cancellation_event.set()
-        self.osc_sender_thread.join()
+        if self.osc_sender_thread is not None:
+            self.osc_sender_thread.join()
 
     def stop_receiver(self):
         if self.osc_receiver_thread:
@@ -160,28 +161,34 @@ class OSCSender:
                             main_config=self.main_config,
                             config=self.config,
                         )
-                        # CSV logging based on current eye display mode
-                        eye_side = self.main_config.eye_display_id
-                        eye_info = osc_message.data[1]  # data is (eye_id, eye_info) tuple
+                        # CSV logging: require valid (eye_id, eye_info) tuple
+                        data = osc_message.data
+                        if not isinstance(data, (tuple, list)) or len(data) < 2:
+                            continue
+                        msg_eye_id, eye_info = data[0], data[1]
+                        if eye_info is None:
+                            continue
 
+                        eye_side = self.main_config.eye_display_id
                         if eye_side in self.csv_loggers:
                             logger = self.csv_loggers[eye_side]
-                            if logger.is_recording and eye_info is not None:
-                                logger.log_eye_data(eye_side, eye_info)
+                            if logger.is_recording:
+                                logger.log_eye_data(msg_eye_id, eye_info)
 
                         if self.main_config.eye_display_id == EyeId.BOTH:
                             if EyeId.BOTH in self.csv_loggers:
                                 both_logger = self.csv_loggers[EyeId.BOTH]
-                                if both_logger.is_recording and eye_info is not None:
-                                    both_logger.log_eye_data(eye_side, eye_info)
+                                if both_logger.is_recording:
+                                    both_logger.log_eye_data(msg_eye_id, eye_info)
                     case OSCMessageType.VRCFT_MODULE_INFO:
                         self.module_sender.send(osc_message=osc_message, client=self.vrcft_client)
                     case _:
                         raise Exception("Encountered message without a handler %s", osc_message.type)
-            except TypeError:
-                continue
             except queue.Empty:
                 continue
+            except Exception as e:
+                print(f"\033[91m[ERROR] OSCSender: {e}\033[0m")
+                traceback.print_exc()
 
 
 class OSCReceiver:
